@@ -1,2 +1,2 @@
 # nano-lux-compass
-Boussole non magnétique
+Boussole Solaire (non magnétique)
