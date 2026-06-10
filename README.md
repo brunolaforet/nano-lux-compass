@@ -1,2 +1,5 @@
 # nano-LUX-Compass
-Boussole Solaire (non magnétique)
+Boussole Solaire
+Position du Nord vrai et Golden Hour par géolocalisation non magnétique.
+Nano App <100Ko · 100% FREE · Sans Pub · Sans Cookie · ✈️ OK
+Créée avec ❤️ par Bruno LAFORÊT
