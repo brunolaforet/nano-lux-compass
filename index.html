@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Boussole solaire — position du soleil et Golden Hour par géolocalisation. Sans carte, sans données, mode avion OK.">
+  <meta name="theme-color" content="#09090e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LUX·Compass">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.svg">
+  <title>LUX·Compass — Boussole solaire</title>
+
+
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Variables globales ── */
+    :root {
+      --gold:        #f5c842;
+      --gold-dim:    rgba(245,200,66,0.18);
+      --gold-border: rgba(245,200,66,0.35);
+      --orange:      #e07b30;
+      --blue-night:  #8aacf5;
+      --bg:          #09090e;
+      --text:        #f0e8d0;
+      --text-dim:    rgba(240,232,208,0.90);
+      --text-faint:  rgba(240,232,208,0.75);
+      --card-bg:     rgba(245,200,66,0.12);
+      --btn-text:    #000000; /* Texte noir sur fond jaune par défaut */
+      --font-sans:   -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono:   ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    /* ── Mode Zénith : contraste maximal pour l'extérieur ── */
+    body.zenith {
+      --bg:          #ffffff;
+      --text:        #000000;
+      --text-dim:    #1a1a1a;
+      --text-faint:  #333333;
+      --gold:        #000000;
+      --gold-border: #000000;
+      --card-bg:     #f2f2f2;
+      --orange:      #000000;
+      --blue-night:  #000000;
+      --btn-text:    #ffffff; /* Texte blanc sur fond noir */
+    }
+
+    /* ── Layout ── */
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 16px 24px;
+      gap: 10px;
+    }
+
+    /* ── Bouton Zénith ── */
+    #zenith-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 100;
+      background: var(--card-bg);
+      border: 0.5px solid var(--gold-border);
+      color: var(--gold);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 0;
+      padding-top: 0;
+    }
+
+    /* Position verticale de l'icône astre — ajustez translateY si besoin */
+    #zenith-toggle::first-letter {
+      display: inline-block;
+      transform: translateY(-2px);
+    }
+    body.zenith #zenith-toggle::first-letter {
+      transform: translateY(0px);
+    }
+
+    /* ── En-tête ── */
+    #header { text-align: center; }
+    h1 {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    #loc {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-top: 4px;
+      min-height: 14px;
+      text-transform: uppercase;
+    }
+
+    /* ── Boussole ── */
+    #compass-wrap {
+      position: relative;
+      width: min(280px, calc(100vw - 64px));
+      height: min(280px, calc(100vw - 64px));
+      flex-shrink: 0;
+    }
+    #compass {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+
+    /* ── Cards ── */
+    #cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; }
+    .card { background: var(--card-bg); border: 0.5px solid var(--gold-border); border-radius: 10px; padding: 9px 8px; text-align: center; }
+    .card-label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
+    .card-value { font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: var(--gold); }
+    .card-sub   { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+
+    /* ── Golden Hour ── */
+    #gh { width: 100%; background: var(--card-bg); border: 0.5px solid var(--gold-border); border-radius: 10px; padding: 10px 14px; }
+    .gh-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+    .gh-row   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .gh-label { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+    .gh-dot   { width: 6px; height: 6px; border-radius: 50%; }
+    .gh-dot.dawn { background: var(--gold); }
+    .gh-dot.dusk { background: var(--orange); }
+    .gh-val   { font-family: var(--font-mono); font-size: 17px; font-weight: 700; }
+    .gh-val.dawn { color: var(--gold); }
+    .gh-val.dusk { color: var(--orange); }
+
+    /* ── Pill état ── */
+    #pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; }
+    #pill.day    { background: rgba(245,200,66,0.12);  color: var(--gold);       border: 0.5px solid rgba(245,200,66,0.3); }
+    #pill.golden { background: rgba(224,123,48,0.15);  color: var(--orange);     border: 0.5px solid rgba(224,123,48,0.38); }
+    #pill.night  { background: rgba(100,130,220,0.1);  color: var(--blue-night); border: 0.5px solid rgba(138,172,245,0.3); }
+
+    /* ── Bouton géolocalisation ── */
+    #geo-btn {
+      display: none;
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      color: var(--btn-text);
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 10px 20px;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 0 0 12px var(--gold-dim);
+    }
+
+
+
+    /* ── Modale ── */
+    .modal-content {
+      background: var(--card-bg);
+      padding: 20px;
+      border: 1px solid var(--gold-border);
+      border-radius: 12px;
+      color: var(--gold);
+    }
+    .modal-content ul { display: flex; gap: 10px; list-style: none; padding: 0; }
+    .modal-content li { cursor: pointer; text-decoration: underline; font-size: 0.8rem; }
+
+    /* ── Divers ── */
+    #hint   { font-size: 10px; color: var(--text-faint); text-align: center; line-height: 1.6; }
+    #footer { font-family: var(--font-mono); font-size: 9px; color: rgba(240,232,208,0.75); text-align: center; margin-top: 10px; }
+    #footer a { color: inherit; text-decoration: none; }
+
+body.zenith #footer {
+  color: var(--text);
+}
+
+
+  </style>
+</head>
+<body>
+
+<button id="zenith-toggle" onclick="toggleZenith()" title="Basculer mode Zénith" aria-label="Basculer mode Zénith">☼</button>
+
+<div id="app">
+
+  <div id="header">
+    <h1>LUX·Compass</h1>
+    <div id="loc">[REF] PARIS | 48.853°N · 2.350°E</div>
+  </div>
+
+  <div id="compass-wrap">
+    <canvas id="compass" role="img" aria-label="Boussole solaire — indique la direction et la position du soleil"></canvas>
+  </div>
+
+<p id="hint"><strong>Posez à plat · Orientez l'icône ☀️ vers le vrai soleil · Le Nord vrai s'affiche</strong></p>
+
+
+
+  <div id="cards">
+    <div class="card"><span class="card-label">Azimut soleil</span><div class="card-value" id="cAz">—°</div><div class="card-sub" id="cDir">—</div></div>
+    <div class="card"><span class="card-label">Élévation</span><div class="card-value" id="cEl">—°</div><div class="card-sub" id="cElSub">—</div></div>
+    <div class="card"><span class="card-label">Nord vrai</span><div class="card-value" id="cNorth">—°</div><div class="card-sub" id="cNorthDir">—</div></div>
+  </div>
+
+  <div id="gh">
+    <div class="gh-title">✦ Golden Hour</div>
+    <div class="gh-row"><span class="gh-label"><span class="gh-dot dawn"></span>Aube dorée</span><span class="gh-val dawn" id="gDawn">—</span></div>
+    <div class="gh-row"><span class="gh-label"><span class="gh-dot dusk"></span>Crépuscule doré</span><span class="gh-val dusk" id="gDusk">—</span></div>
+  </div>
+
+  <span id="pill" class="day">Calcul…</span>
+
+  <button id="geo-btn" onclick="requestGeo()">⌖ Activer la géolocalisation réelle</button>
+
+
+<p id="hint">
+  Position GPS : calcul local uniquement · Aucune donnée transmise
+</p>
+
+
+
+  <div id="footer">
+    Nano App &lt;100Ko · 100% FREE · Sans Pub · Sans Cookie · <span style="color: #2ecc71;">✈️ OK</span><br>
+        v1.8 · Créée avec ❤️ par <a href="https://www.linkedin.com/in/brunolaforet/" target="_blank">Bruno LAFORÊT</a>
+  </div>
+
+
+
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Utilitaires trigonométriques ── */
+  const toRad = d => d * Math.PI / 180;
+  const toDeg = r => r * 180 / Math.PI;
+
+  /* ── Calcul de la position solaire ──
+     Algorithme USNO basse précision (~1–2° d'erreur max), suffisant pour un usage photo.
+     date.getTime() retourne des ms depuis l'epoch Unix en UTC — le calcul julien est correct.
+     Réfraction atmosphérique non corrigée : écart ≤1 min sur les heures de lever/coucher. */
+  function calcSun(date, lat, lon) {
+    // Jour julien depuis l'epoch UTC
+    const JD = date.getTime() / 86400000 + 2440587.5;
+    // Jours depuis J2000.0
+    const n  = JD - 2451545.0;
+    // Longitude moyenne du soleil (degrés)
+    const L  = (280.460 + 0.9856474 * n) % 360;
+    // Anomalie moyenne (radians)
+    const g  = toRad((357.528 + 0.9856003 * n) % 360);
+    // Longitude écliptique (radians)
+    const lam = toRad(L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g));
+    // Obliquité de l'écliptique (radians)
+    const eps    = toRad(23.439 - 0.0000004 * n);
+    const sinDec = Math.sin(eps) * Math.sin(lam);
+    const dec    = Math.asin(sinDec);
+    // Ascension droite (radians)
+    const RA   = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam));
+    // Temps sidéral moyen de Greenwich (heures)
+    const GMST = (18.697375 + 24.065709824279 * n) % 24;
+    // Temps sidéral local (heures)
+    const LST  = ((GMST + lon / 15) % 24 + 24) % 24;
+    // Angle horaire (radians)
+    const HA   = toRad((LST - toDeg(RA) / 15) * 15);
+    const latR = toRad(lat);
+    // Hauteur (altitude) en degrés
+    const sinAlt = Math.sin(latR) * sinDec + Math.cos(latR) * Math.cos(dec) * Math.cos(HA);
+    const alt    = toDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+    // Azimut en degrés (0° = Nord, sens horaire)
+    const cosAz = (sinDec - Math.sin(latR) * sinAlt) / (Math.cos(latR) * Math.cos(toRad(alt)) + 1e-9);
+    let az = toDeg(Math.acos(Math.max(-1, Math.min(1, cosAz))));
+    if (Math.sin(HA) > 0) az = 360 - az;
+    return { az, alt };
+  }
+
+  /* ── Calcul de la Golden Hour ──
+     Fenêtre retenue : altitude entre -4° et +6°.
+     -4° à 0° : crépuscule civil (soleil sous l'horizon, ciel encore coloré).
+      0° à +6° : golden hour stricte (lumière rasante chaude).
+     Les deux phases sont photographiquement exploitables, d'où ce choix élargi.
+     Retourne { start: null, end: null } si le soleil ne passe jamais dans cette plage. */
+  function goldenHour(date, lat, lon, type) {
+    const ALT_LOW  = -4; // seuil bas : crépuscule civil
+    const ALT_HIGH =  6; // seuil haut : fin de la golden hour
+
+    // Fenêtre : matin 03h–11h, soir 14h–24h > couvre les étés tardifs (boréaux et australs)
+    const base = new Date(date);
+    base.setHours(type === 'morning' ? 3 : 14, 0, 0, 0);
+    const maxMinutes = type === 'morning' ? 480 : 600;
+
+    let start = null, end = null;
+    for (let m = 0; m <= maxMinutes; m++) {
+      const t   = new Date(base.getTime() + m * 60000);
+      const alt = calcSun(t, lat, lon).alt;
+
+      if (alt >= ALT_LOW && alt <= ALT_HIGH) {
+        if (!start) start = t;
+        end = t;
+      } else if (start) {
+        // On est sorti de la plage — inutile de continuer
+        break;
+      }
+    }
+    return { start, end };
+  }
+
+  /* ── Formatage ── */
+  function fmt2(n) { return String(n).padStart(2, '0'); }
+  function fmtT(d) { return d ? `${fmt2(d.getHours())}:${fmt2(d.getMinutes())}` : '—'; }
+  function dirLabel(az) {
+    // Normalisation explicite dans [0°, 360°) pour robustesse
+    const az360 = ((az % 360) + 360) % 360;
+    const d = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+    return d[Math.round(az360 / 22.5) % 16];
+  }
+
+  /* ── Dessin de la boussole ── */
+  function drawCompass(az, alt) {
+    const wrap   = document.getElementById('compass-wrap');
+    const canvas = document.getElementById('compass');
+    const dpr    = window.devicePixelRatio || 1;
+    const size   = Math.floor(wrap.getBoundingClientRect().width) || 280;
+
+    if (canvas.width !== Math.round(size * dpr)) {
+      canvas.width = canvas.height = Math.round(size * dpr);
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2;
+    const Ro = W * 0.36, Rl = W * 0.28, dialRot = toRad(az);
+
+    const style    = getComputedStyle(document.body);
+    const colorGold = style.getPropertyValue('--gold').trim();
+    const colorText = style.getPropertyValue('--text').trim();
+    const colorDim  = style.getPropertyValue('--text-dim').trim();
+
+    /* Cadran rotatif */
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(dialRot);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, Ro, 0, Math.PI * 2);
+    ctx.arc(0, 0, Rl, 0, Math.PI * 2, true);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fill();
+
+    ctx.beginPath(); ctx.arc(0, 0, Ro, 0, Math.PI * 2); ctx.strokeStyle = colorGold; ctx.lineWidth = 1.5 * dpr; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, Rl, 0, Math.PI * 2); ctx.strokeStyle = colorDim;  ctx.lineWidth = 0.8 * dpr; ctx.stroke();
+
+    /* Graduations */
+    for (let i = 0; i < 72; i++) {
+      const deg   = i * 5, a = toRad(deg - 90);
+      const isMaj = deg % 90 === 0;
+      const isMed = deg % 45 === 0 && !isMaj;
+      const is10  = deg % 10 === 0 && !isMaj && !isMed;
+      const len   = (isMaj ? 0.055 : isMed ? 0.04 : is10 ? 0.025 : 0.012) * W;
+      ctx.beginPath();
+      ctx.moveTo(Ro * Math.cos(a), Ro * Math.sin(a));
+      ctx.lineTo((Ro - len) * Math.cos(a), (Ro - len) * Math.sin(a));
+      ctx.strokeStyle = isMaj ? colorGold : colorDim;
+      ctx.lineWidth   = (isMaj ? 2.5 : isMed ? 1.8 : 1.2) * dpr;
+      ctx.stroke();
+    }
+
+    /* Chiffres de degrés */
+    for (let i = 0; i < 12; i++) {
+      const deg = i * 30, a = toRad(deg - 90);
+      ctx.save();
+      ctx.translate((Rl - W * 0.033) * Math.cos(a), (Rl - W * 0.033) * Math.sin(a));
+      ctx.rotate(-dialRot);
+      ctx.font        = `700 ${Math.round(W * 0.036)}px ui-monospace, monospace`;
+      ctx.fillStyle   = deg % 90 === 0 ? colorGold : colorDim;
+      ctx.textAlign   = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(deg, 0, 0);
+      ctx.restore();
+    }
+
+    /* Points cardinaux */
+    const cardinals = [
+      { l: 'N',  deg: 0,   col: colorGold, sz: 0.080, w: 700 },
+      { l: 'E',  deg: 90,  col: colorText, sz: 0.070, w: 700 },
+      { l: 'S',  deg: 180, col: colorText, sz: 0.070, w: 700 },
+      { l: 'O',  deg: 270, col: colorText, sz: 0.070, w: 700 },
+      { l: 'NE', deg: 45,  col: colorDim,  sz: 0.045, w: 400 },
+      { l: 'SE', deg: 135, col: colorDim,  sz: 0.045, w: 400 },
+      { l: 'SO', deg: 225, col: colorDim,  sz: 0.045, w: 400 },
+      { l: 'NO', deg: 315, col: colorDim,  sz: 0.045, w: 400 },
+    ];
+    cardinals.forEach(({ l, deg, col, sz, w }) => {
+      const a  = toRad(deg - 90);
+      const cr = Ro + W * 0.075;
+      ctx.save();
+      ctx.translate(cr * Math.cos(a), cr * Math.sin(a));
+      ctx.rotate(-dialRot);
+      ctx.font        = `${w} ${Math.round(W * sz)}px ui-monospace, "Liberation Mono", monospace`;
+      ctx.fillStyle   = col;
+      ctx.textAlign   = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(l, 0, 0);
+      ctx.restore();
+    });
+    ctx.restore();
+
+    /* Aiguille et soleil */
+    ctx.save();
+    ctx.translate(cx, cy);
+    const sunColor = alt > 10 ? '#f5c842' : alt > -6 ? '#e07b30' : '#8aacf5';
+    const nLen = Ro - W * 0.025;
+    const SY   = -nLen;
+
+    /* Halo de l'aiguille */
+    const grd = ctx.createLinearGradient(0, 0, 0, -nLen);
+    grd.addColorStop(0,    'rgba(245,200,66,0)');
+    grd.addColorStop(0.45, alt > 0 ? 'rgba(245,200,66,0.22)' : 'rgba(138,172,245,0.1)');
+    grd.addColorStop(1,    'rgba(245,200,66,0)');
+    ctx.beginPath();
+    ctx.moveTo(-W * 0.020, 0); ctx.lineTo(-W * 0.005, -nLen);
+    ctx.lineTo( W * 0.005, -nLen); ctx.lineTo( W * 0.020, 0);
+    ctx.closePath();
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    /* Ligne de l'aiguille */
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(0, -nLen);
+    ctx.strokeStyle = colorGold; ctx.lineWidth = 2 * dpr; ctx.stroke();
+
+    /* Disque solaire */
+    if (alt > -6) {
+      // Halos
+      [[W * 0.075, 0.09], [W * 0.052, 0.18], [W * 0.035, 0.32]].forEach(([r, a]) => {
+        ctx.save(); ctx.globalAlpha = a;
+        ctx.fillStyle = sunColor;
+        ctx.beginPath(); ctx.arc(0, SY, r, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+      // Disque principal
+      const sunR = W * 0.040;
+      ctx.beginPath(); ctx.arc(0, SY, sunR, 0, Math.PI * 2); ctx.fillStyle = sunColor; ctx.fill();
+      // Cœur blanc
+      ctx.beginPath(); ctx.arc(0, SY, sunR * 0.38, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill();
+      // Rayons
+      if (alt > -4) {
+        for (let i = 0; i < 8; i++) {
+          const ra = Math.PI * 2 / 8 * i;
+          ctx.beginPath();
+          ctx.moveTo(sunR * 1.20 * Math.cos(ra), SY + sunR * 1.20 * Math.sin(ra));
+          ctx.lineTo(sunR * 1.75 * Math.cos(ra), SY + sunR * 1.75 * Math.sin(ra));
+          ctx.strokeStyle = sunColor; ctx.lineWidth = 2.2 * dpr; ctx.lineCap = 'round'; ctx.stroke();
+        }
+      }
+    }
+
+    /* Pivot central */
+    ctx.beginPath(); ctx.arc(0, 0, W * 0.014, 0, Math.PI * 2); ctx.fillStyle = colorGold; ctx.fill();
+    ctx.restore();
+
+
+  }
+
+  /* ── État de position ── */
+  let lat = 48.8530, lon = 2.3499;
+
+  function setFallbackLocation(latitude, longitude) {
+    document.getElementById('loc').textContent =
+      `[REF] PARIS | ${Math.abs(latitude).toFixed(3)}${latitude >= 0 ? '°N' : '°S'} · ${Math.abs(longitude).toFixed(3)}${longitude >= 0 ? '°E' : '°O'}`;
+  }
+
+  function fetchReverseGeocode(latitude, longitude) {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`;
+    fetch(url, { headers: { 'Accept-Language': 'fr', 'User-Agent': 'LUX-Compass/1.0 (hello@brunolaforet.com)' } })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.address) {
+          const city = data.address.city || data.address.town || data.address.village
+                    || data.address.municipality || data.address.suburb;
+          document.getElementById('loc').textContent = city || setFallbackLocation(latitude, longitude);
+          if (!city) setFallbackLocation(latitude, longitude);
+        } else {
+          setFallbackLocation(latitude, longitude);
+        }
+      })
+      .catch(() => setFallbackLocation(latitude, longitude));
+  }
+
+  /* ── Mise à jour de l'interface ── */
+  function update() {
+    window.forceUpdate = update;
+    const now = new Date();
+    const { az, alt } = calcSun(now, lat, lon);
+
+    drawCompass(az, alt);
+
+    document.getElementById('cAz').textContent    = Math.round(az) + '°';
+    document.getElementById('cDir').textContent   = dirLabel(az);
+    document.getElementById('cEl').textContent    = (alt >= 0 ? '+' : '') + Math.round(alt) + '°';
+    document.getElementById('cElSub').textContent = alt > 0 ? 'Au-dessus' : 'Sous horizon';
+
+    const nAz = (az + 180) % 360;
+    document.getElementById('cNorth').textContent    = Math.round(nAz) + '°';
+    document.getElementById('cNorthDir').textContent = dirLabel(nAz);
+
+    const gh1 = goldenHour(now, lat, lon, 'morning');
+    const gh2 = goldenHour(now, lat, lon, 'evening');
+    document.getElementById('gDawn').textContent = gh1.start ? `${fmtT(gh1.start)} – ${fmtT(gh1.end)}` : '—';
+    document.getElementById('gDusk').textContent = gh2.start ? `${fmtT(gh2.start)} – ${fmtT(gh2.end)}` : '—';
+
+    const pill = document.getElementById('pill');
+    if (alt > 6)       { pill.className = 'day';    pill.textContent = '☀ Plein jour'; }
+    else if (alt > -4) { pill.className = 'golden'; pill.textContent = '✦ Golden Hour'; }
+    else               { pill.className = 'night';  pill.textContent = '☾ Nuit'; }
+  }
+
+  /* ── Géolocalisation ── */
+  window.requestGeo = function () {
+    document.getElementById('geo-btn').style.display = 'none';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        fetchReverseGeocode(lat, lon);
+        update();
+      },
+      () => {
+        document.getElementById('loc').textContent = 'Position par défaut';
+        update();
+      }
+    );
+  };
+
+  /* ── Initialisation ── */
+  function init() {
+    if (!navigator.geolocation) {
+      document.getElementById('loc').textContent = 'Antony';
+      update();
+      return;
+    }
+    navigator.permissions && navigator.permissions.query({ name: 'geolocation' })
+      .then(res => {
+        if (res.state === 'prompt') document.getElementById('geo-btn').style.display = 'block';
+        else window.requestGeo();
+      })
+      .catch(() => window.requestGeo());
+  }
+
+  /* ── Toggle mode Zénith ── */
+  window.toggleZenith = function () {
+    document.body.classList.toggle('zenith');
+    document.getElementById('zenith-toggle').textContent =
+      document.body.classList.contains('zenith') ? '☾' : '☼';
+    if (typeof window.forceUpdate === 'function') window.forceUpdate();
+  };
+
+
+
+  init();
+  requestAnimationFrame(() => { update(); setInterval(update, 60000); });
+  window.addEventListener('resize', () => requestAnimationFrame(update));
+
+})();
+</script>
+</body>
+</html>

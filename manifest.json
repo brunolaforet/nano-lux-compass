@@ -1,0 +1,16 @@
+{
+  "short_name": "LUX·Compass",
+  "name": "LUX·Compass — Boussole solaire",
+  "description": "Boussole solaire — position du soleil et Golden Hour par géolocalisation. Sans carte, sans données, mode avion OK.",
+  "icons": [
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "192x192" },
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "512x512", "purpose": "any" },
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "start_url": "/nano-lux-compass/index.html",
+  "scope": "/nano-lux-compass/",
+  "background_color": "#09090e",
+  "theme_color": "#09090e",
+  "display": "standalone",
+  "orientation": "portrait"
+}
