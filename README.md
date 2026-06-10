@@ -1,2 +1,2 @@
-# nano-lux-compass
+# nano-LUX-Compass
 Boussole Solaire (non magnétique)
