@@ -55,6 +55,7 @@ Application web statique hébergée sur GitHub Pages :
 
 * **Calcul local unique :** Les données de localisation servent uniquement au calcul immédiat des éphémérides dans votre navigateur. Aucune coordonnée GPS n'est transmise à un serveur tiers ou conservée.
 * **Zéro script tiers :** Absence totale de cookies, de trackers ou de scripts publicitaires.
+* **Note technique :** Le fichier `googleXXXXXXXX.html` sert uniquement à la validation Google Search Console (totalement passif). Vous pouvez le supprimer si vous forkez le projet.
 
 ## **⚖️ Licence & Commu**
 
