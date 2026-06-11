@@ -1,6 +1,7 @@
 # **☀️ LUX · COMPASS**
 
-**La boussole solaire de positionnement astronomique, version ultra-légère.** Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Connexion requise uniquement à l'initialisation • Calcul local des éphémérides
+**La boussole solaire de positionnement astronomique, version ultra-légère.**  
+Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Connexion requise uniquement à l'initialisation • Calcul local des éphémérides
 
 ## **✨ Points Forts**
 
