@@ -1,6 +1,7 @@
 # **☀️ LUX · COMPASS**
 
-La boussole solaire de positionnement astronomique, version ultra-légère. Nano App < 100 Ko • 100% Hors-ligne • Zéro Pub • Zéro Cookie • Calcul local (GPS isolé)
+**La boussole solaire de positionnement astronomique, version ultra-légère.**
+Nano App < 100 Ko • 100% Hors-ligne • Zéro Pub • Zéro Cookie • Calcul local (GPS isolé)
 
 ## **✨ Points Forts**
 
@@ -12,7 +13,7 @@ La boussole solaire de positionnement astronomique, version ultra-légère. Nano
 
 ## **📲 Installation Rapide**
 
-1. Ouvrez `brunolaforet.github.io` sur votre mobile.
+1. Ouvrez ` brunolaforet.github.io/nano-lux-compass` sur votre mobile.
 2. **Android (Chrome) :** Menu ⋮ -> Installer l'application.
 3. **iOS (Safari) :** Partager ⎋ -> Sur l'écran d'accueil.
 
