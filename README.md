@@ -1,14 +1,14 @@
 # **☀️ LUX · COMPASS**
 
-**La boussole solaire de positionnement astronomique, version ultra-légère.**  
-Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Géolocalisation requise • Calcul local des éphémérides
+**La boussole solaire de positionnement astronomique, version ultra-légère.** Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Connexion requise uniquement à l'initialisation • Calcul local des éphémérides
 
 ## **✨ Points Forts**
 
 * **Ultra-légère :** Moins de 100 Ko au total, fidèle à la philosophie des "Nano Apps".
 * **Navigation Solaire :** Détermination du Nord vrai par alignement de l'azimut et de l'élévation du soleil.
 * **Données Éphémérides (Golden Hour) :** Calcul en temps réel des plages exactes de l'aube dorée et du crépuscule doré.
-* **Calcul Local :** Une fois la position acquise, l'ensemble des formules trigonométriques s'exécute instantanément sur l'appareil.
+* **Idéal Randonnée & Autonomie :** La connexion réseau est indispensable uniquement pour établir la géolocalisation initiale. Elle peut être instantanément coupée (passage en Mode Avion) sitôt la position fixée.
+* **Ultra-sobre en énergie :** L'absence d'échanges réseau continus et l'exécution de code minimaliste réduisent drastiquement la consommation de la batterie, un atout crucial sur le terrain.
 * **Confidentialité :** Pas d'inscription, pas de tracking, aucun stockage de vos coordonnées sur un serveur externe.
 
 ## **📲 Installation Rapide**
@@ -22,8 +22,8 @@ Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Géolocalisation requise �
 Application web statique hébergée sur GitHub Pages :
 * **Core :** HTML5, CSS3 (Tailwind CSS), JavaScript (Vanilla).
 * **PWA :** Web App Manifest configuré pour une exécution plein écran native.
-* **Connectivité & API :** Requiert une connexion active et l'autorisation d'accès aux services de localisation de l'appareil (API `navigator.geolocation`) pour l'initialisation des coordonnées.
-* **Algorithmique :** Formules trigonométriques appliquées localement pour le calcul de la position du soleil.
+* **Cycle de connectivité :** Utilisation ponctuelle de l'API `navigator.geolocation` au démarrage. Une fois les coordonnées acquises, l'application est totalement indépendante du réseau.
+* **Algorithmique & Performance :** Formules trigonométriques appliquées localement en JavaScript. Algorithme brut à haute performance, sans framework lourd ni requêtes d'arrière-plan, préservant les ressources du processeur.
 
 ## **🔒 Vie Privée & Transparence**
 
@@ -34,6 +34,9 @@ Application web statique hébergée sur GitHub Pages :
 
 * **Licence :** MIT (Libre d'utilisation, de modification et de distribution).
 * **Contact :** Une question ou une suggestion d'optimisation ? Ouvrez une Issue sur le dépôt GitHub.
+
+
+
 
 
 
