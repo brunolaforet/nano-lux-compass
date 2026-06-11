@@ -3,6 +3,8 @@
 **La boussole solaire de positionnement astronomique, version ultra-légère.**  
 Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Connexion requise uniquement à l'initialisation • Calcul local des éphémérides
 
+[brunolaforet.github.io/nano-lux-compass](https://brunolaforet.github.io/nano-lux-compass) 
+
 ---
 
 ## **🎯 Domaines d'application**
