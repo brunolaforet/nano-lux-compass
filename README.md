@@ -3,6 +3,29 @@
 **La boussole solaire de positionnement astronomique, version ultra-légère.**  
 Nano App < 100 Ko • Zéro Pub • Zéro Cookie • Connexion requise uniquement à l'initialisation • Calcul local des éphémérides
 
+---
+
+## **🎯 Domaines d'application**
+
+### 🥾 **1. Randonnée (Orientation Low-Tech)**
+
+* **Indépendance réseau :** La connexion Internet est requise uniquement pour fixer la géolocalisation initiale au démarrage. Une fois la position établie, vous pouvez couper le réseau (Mode Avion) : l'application reste 100% opérationnelle en veille.
+* **Économie de batterie :** L'arrêt des requêtes réseau et le code JavaScript natif minimaliste préservent l'autonomie du smartphone, un facteur de sécurité critique lors de longues sorties en nature.
+* **Alternative magnétique :** Contrairement aux boussoles classiques, LUX · COMPASS n'est pas perturbée par les anomalies géologiques ou les interférences électroniques.
+
+### 📸 **2. Photographie & Production Vidéo (Chasseurs de Lumière)**
+
+* **Anticipation de la Golden Hour :** Affichage immédiat des plages horaires exactes de l'aube et du crépuscule doré pour planifier précisément les prises de vue.
+* **Axe de lumière :** Permet de déterminer sur le terrain l'angle précis (azimut et élévation) où le soleil va percer à un instant T, sans dépendre d'une couverture réseau continue.
+
+### 📐 **3. Architecture & Immobilier (Diagnostic d'Ensoleillement)**
+
+* **Vérification d'exposition :** Permet de valider instantanément l'orientation réelle (Est, Ouest, Sud) des façades, balcons ou terrasses lors d'une visite de bien ou sur un chantier.
+* **Impact des ombres :** L'analyse de la hauteur angulaire (élévation) du soleil aide à évaluer si les obstacles environnants (bâtiments, arbres) masqueront la lumière naturelle au fil de la journée.
+
+---
+
+
 ## **✨ Points Forts**
 
 * **Ultra-légère :** Moins de 100 Ko au total, fidèle à la philosophie des "Nano Apps".
